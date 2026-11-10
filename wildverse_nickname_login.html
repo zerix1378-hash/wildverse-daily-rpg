@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WILDVERSE DAILY RPG</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1020;--panel:#151d32;--line:#293653;--muted:#9aa8c3;--green:#9be15d;--blue:#65c7f7}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#1b2a45,#0b1020 55%);font-family:system-ui,-apple-system,sans-serif;color:#f4f7ff;min-height:100vh;padding:24px 16px}
+main{max-width:460px;margin:0 auto}.brand{text-align:center;margin:24px 0 22px}.logo{font-size:42px}.brand h1{font-size:25px;letter-spacing:1px;margin:8px 0 4px}.brand p{color:var(--muted);margin:0;font-size:13px}
+.panel{background:rgba(21,29,50,.96);border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 18px 50px #0005}
+.tabs{display:flex;gap:8px;margin-bottom:20px}.tabs button{flex:1;border:1px solid var(--line);background:#10182b;color:#c8d3e8;border-radius:12px;padding:12px;font-weight:700}.tabs button.active{background:var(--green);color:#15210d;border-color:var(--green)}
+label{display:block;font-size:13px;color:#c8d3e8;margin:14px 0 7px}input{width:100%;padding:14px;border:1px solid var(--line);border-radius:12px;background:#0c1426;color:white;font-size:16px;outline:none}input:focus{border-color:var(--blue)}
+.primary{width:100%;margin-top:18px;padding:14px;border:0;border-radius:12px;background:linear-gradient(90deg,#9be15d,#65c7f7);color:#0b1720;font-weight:800;font-size:16px}
+.note{font-size:12px;line-height:1.6;color:var(--muted);margin:16px 2px 0}.status{margin-top:14px;padding:12px;border-radius:10px;background:#0c1426;color:#c8d3e8;font-size:13px;line-height:1.5;display:none}
+.preview{margin-top:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.tile{background:#111a2d;border:1px solid var(--line);border-radius:13px;padding:13px 8px;text-align:center}.tile b{display:block;font-size:20px}.tile span{font-size:11px;color:var(--muted)}
+footer{text-align:center;color:#6f7e99;font-size:11px;margin:20px 0}
+</style>
+</head>
+<body>
+<main>
+  <header class="brand"><div class="logo">🌿</div><h1>WILDVERSE</h1><p>DAILY RPG · 나만의 생태계를 키워라</p></header>
+  <section class="panel">
+    <div class="tabs"><button id="loginTab" class="active" type="button">로그인</button><button id="joinTab" type="button">회원가입</button></div>
+    <form id="authForm">
+      <label for="nickname">닉네임</label><input id="nickname" maxlength="16" autocomplete="username" placeholder="닉네임 입력" required>
+      <label for="password">비밀번호</label><input id="password" type="password" minlength="6" autocomplete="current-password" placeholder="비밀번호 입력 (6자 이상)" required>
+      <button class="primary" id="submitBtn" type="submit">로그인</button>
+    </form>
+    <div class="status" id="status" role="status"></div>
+    <p class="note">현재 버전은 화면 미리보기입니다. 닉네임과 비밀번호 입력 화면은 준비됐지만, 실제 회원가입·로그인과 기기 간 데이터 저장을 하려면 안전한 서버 연결이 필요합니다. 비밀번호는 이 페이지에 저장되지 않습니다.</p>
+  </section>
+  <div class="preview">
+    <div class="tile"><b>🥚</b><span>알에서 시작</span></div>
+    <div class="tile"><b>📖</b><span>생물 도감</span></div>
+    <div class="tile"><b>⚔️</b><span>온라인 모험</span></div>
+  </div>
+  <footer>WILDVERSE DAILY RPG</footer>
+</main>
+<script>
+const loginTab=document.getElementById('loginTab'),joinTab=document.getElementById('joinTab');
+const submitBtn=document.getElementById('submitBtn'),statusBox=document.getElementById('status');
+let mode='login';
+function setMode(next){mode=next;loginTab.classList.toggle('active',mode==='login');joinTab.classList.toggle('active',mode==='join');submitBtn.textContent=mode==='login'?'로그인':'회원가입';statusBox.style.display='none';}
+loginTab.addEventListener('click',()=>setMode('login'));
+joinTab.addEventListener('click',()=>setMode('join'));
+document.getElementById('authForm').addEventListener('submit',e=>{e.preventDefault();statusBox.textContent='로그인 화면 연결은 완료됐어요. 실제 계정 생성과 로그인은 서버 연결 후 작동합니다. 지금 입력한 비밀번호는 저장하거나 전송하지 않았습니다.';statusBox.style.display='block';});
+</script>
+</body>
+</html>
