@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WILDVERSE DAILY RPG</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{color-scheme:dark;--bg:#090f1e;--panel:#141e33;--line:#2b3b59;--muted:#a0aec6;--lime:#a8e66b;--cyan:#72d5f5;--gold:#ffd36b}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#203451 0,#0b1425 48%,#080d18 100%);color:#f5f7ff;font-family:system-ui,-apple-system,sans-serif;min-height:100vh;padding:16px}
+main{max-width:760px;margin:auto}.brand{text-align:center;padding:12px 0 18px}.brand .logo{font-size:34px}.brand h1{font-size:23px;letter-spacing:2px;margin:3px 0}.brand p{margin:0;color:var(--muted);font-size:12px}
+.panel{background:rgba(20,30,51,.96);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:13px;box-shadow:0 12px 35px #0003}
+h2{font-size:16px;margin:0 0 12px}h3{font-size:14px;margin:0 0 7px}
+.muted{color:var(--muted);font-size:12px;line-height:1.5}.row{display:flex;align-items:center;justify-content:space-between;gap:10px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{background:#0d1729;border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}.stat b{display:block;font-size:20px}.stat span{font-size:11px;color:var(--muted)}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:13px}.tabs button,.btn{border:1px solid var(--line);background:#0d1729;color:#eaf0ff;border-radius:11px;padding:11px 8px;font-weight:700;font-size:13px}.tabs button.active{background:var(--lime);color:#13200d;border-color:var(--lime)}.btn.primary{background:linear-gradient(90deg,var(--lime),var(--cyan));color:#102018;border:0}.btn:disabled{opacity:.45}
+.creature{text-align:center;background:linear-gradient(150deg,#182943,#101a2d);border:1px solid #354866;border-radius:16px;padding:18px}.pet{font-size:72px;line-height:1.25}.petname{font-weight:800;font-size:18px;margin:5px}.bar{height:9px;background:#0a1220;border-radius:9px;overflow:hidden;margin:8px 0}.bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--lime),var(--cyan));width:0%}
+.task,.item,.creature-card{background:#0d1729;border:1px solid var(--line);border-radius:13px;padding:12px;margin-top:8px}.task p{margin:4px 0 0}.task button{margin-top:8px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.creature-card{text-align:center}.creature-card .emoji{font-size:34px}.silhouette{filter:brightness(0);text-shadow:none}.hidden-creature{color:#71809a}.hidden-creature .emoji{font-size:34px;filter:brightness(0)}
+input{width:100%;padding:13px;border:1px solid var(--line);border-radius:11px;background:#0b1425;color:white;font-size:16px;margin:6px 0 12px}label{font-size:12px;color:var(--muted)}.authbtn{width:100%;padding:13px;border:0;border-radius:11px;background:var(--lime);font-weight:800;font-size:15px}
+#game{display:none}#status{display:none;background:#0b1425;border:1px solid var(--line);padding:10px;border-radius:10px;margin:10px 0;font-size:12px;line-height:1.5;white-space:pre-wrap}
+.view{display:none}.view.active{display:block}.tiny{font-size:11px;color:var(--muted)}.danger{background:#2a1720!important;border-color:#623144!important}.footer{text-align:center;color:#64738d;font-size:10px;padding:8px}
+@media(max-width:440px){body{padding:10px}.tabs button{font-size:12px;padding:10px 3px}.stats{gap:5px}.stat{padding:8px 4px}}
+</style></head>
+<body><main>
+<header class="brand"><div class="logo">🌿</div><h1>WILDVERSE</h1><p>DAILY RPG · 나만의 생태계를 키워라</p></header>
+<section id="auth" class="panel">
+<h2>모험가 로그인</h2><p class="muted">닉네임과 비밀번호로 접속해. 새 계정은 회원가입을 선택해 줘.</p>
+<div class="tabs"><button id="loginTab" class="active">로그인</button><button id="joinTab">회원가입</button></div>
+<label for="nickname">닉네임</label><input id="nickname" maxlength="16" placeholder="2~16자, 공백 없이">
+<label for="password">비밀번호</label><input id="password" type="password" minlength="6" placeholder="6자 이상">
+<button class="authbtn" id="authSubmit">로그인</button><div id="status"></div>
+</section>
+<section id="game" style="display:none">
+<div class="panel"><div class="row"><div><b id="playerName">모험가</b><div class="tiny" id="levelText">Lv.1 모험가</div></div><button class="btn" id="logout">로그아웃</button></div>
+<div class="stats" style="margin-top:12px"><div class="stat"><b id="coins">0</b><span>🪙 코인</span></div><div class="stat"><b id="xp">0</b><span>✨ 경험치</span></div><div class="stat"><b id="count">0/8</b><span>📖 도감</span></div></div></div>
+<nav class="tabs" id="nav"><button class="active" data-view="home">🏡 홈</button><button data-view="tasks">📋 퀘스트</button><button data-view="explore">🌲 탐험</button><button data-view="book">📖 도감</button></nav>
+<section class="view active" id="home">
+<div class="panel"><h2>나의 동료</h2><div class="creature"><div class="pet" id="petEmoji">🥚</div><div class="petname" id="petName">이름 없는 알</div><div class="muted" id="petStage">알 단계 · 부화까지 조금만 더!</div><div class="bar"><i id="petBar"></i></div><div class="tiny" id="petProgress">0 / 100 경험치</div></div><div class="row" style="margin-top:10px"><button class="btn primary" id="train">훈련하기 (-10 코인)</button><button class="btn" id="renamePet">이름 바꾸기</button></div></div>
+<div class="panel"><h2>오늘의 기록</h2><p class="muted" id="dailySummary">오늘의 퀘스트를 완료하고 코인과 경험치를 모아 봐!</p></div>
+</section>
+<section class="view" id="tasks"><div class="panel"><h2>오늘의 퀘스트</h2><p class="muted">현실에서 완료한 활동을 체크하고 보상을 받아. 하루에 한 번씩 초기화돼.</p><div id="taskList"></div></div></section>
+<section class="view" id="explore"><div class="panel"><h2>탐험 지역</h2><p class="muted">탐험하면 코인과 경험치를 얻을 수 있어. 발견한 생물은 도감에 등록돼.</p><div class="grid" id="regionList"></div><p class="tiny" style="margin-top:10px">탐험 보상은 무작위이며 하루 5회까지 가능해.</p></div></section>
+<section class="view" id="book"><div class="panel"><h2>생물 도감</h2><p class="muted">발견하지 못한 생물은 실루엣으로 표시돼.</p><div class="grid" id="bookList"></div></div><div class="panel"><h2>상점</h2><div class="row"><div><b>🍎 성장 열매</b><div class="tiny">동료 경험치 +20</div></div><button class="btn primary" id="buyFruit">구매 · 30 코인</button></div></div></section>
+<div id="gameStatus" class="panel" style="display:none"></div>
+</section><div class="footer">WILDVERSE DAILY RPG · 안전하게 즐기는 일일 성장 모험</div></main>
+<script>
+const URL='https://zvdaeauujohbatehqrko.supabase.co';
+const KEY='sb_publishable_DwsSTbg41K0JHYY1xSmgKw_9x1Re2zO';
+const sb=window.supabase.createClient(URL,KEY);
+const $=id=>document.getElementById(id);
+let mode='login',user=null,nickname='',state=null,saving=false;
+const creatures=[
+{id:'fox',name:'숲여우',emoji:'🦊',region:'숲'},
+{id:'owl',name:'달빛부엉이',emoji:'🦉',region:'숲'},
+{id:'frog',name:'이끼개구리',emoji:'🐸',region:'습지'},
+{id:'whale',name:'푸른고래',emoji:'🐳',region:'바다'},
+{id:'dragon',name:'새끼용',emoji:'🐉',region:'화산'},
+{id:'slime',name:'별빛슬라임',emoji:'🟣',region:'하늘섬'},
+{id:'deer',name:'수정사슴',emoji:'🦌',region:'설원'},
+{id:'alien',name:'우주꼬마',emoji:'👾',region:'우주'}];
+const tasks=[
+{id:'water',title:'물 마시기',desc:'물을 마시고 수분을 챙기기',xp:15,coins:10},
+{id:'tidy',title:'주변 정리하기',desc:'책상이나 방 한 곳 정리하기',xp:20,coins:15},
+{id:'read',title:'독서하기',desc:'책이나 글 10분 읽기',xp:20,coins:15},
+{id:'move',title:'몸 움직이기',desc:'가볍게 산책하거나 스트레칭하기',xp:20,coins:15}
+];
+const regions=[{id:'숲',emoji:'🌳',desc:'초록빛 숲을 탐험해'},{id:'습지',emoji:'🪷',desc:'작은 생명이 사는 습지'},{id:'바다',emoji:'🌊',desc:'푸른 바닷속을 탐험해'},{id:'화산',emoji:'🌋',desc:'뜨거운 화산 지대'},{id:'설원',emoji:'❄️',desc:'차가운 눈의 땅'},{id:'우주',emoji:'🚀',desc:'신비로운 우주 공간'}];
+function today(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function fresh(){return {coins:100,xp:0,level:1,pet:{name:'새싹이',xp:0,stage:0},discovered:[],completed:{},explores:{date:today(),count:0},taskDate:today()}}
+function normalize(s){let x={...fresh(),...(s||{})};x.pet={...fresh().pet,...(s?.pet||{})};x.discovered=Array.isArray(x.discovered)?x.discovered:[];x.completed=x.completed||{};if(x.taskDate!==today()){x.completed={};x.taskDate=today()}if(x.explores?.date!==today())x.explores={date:today(),count:0};return x}
+function gameMessage(t){const el=$('gameStatus');el.textContent=t;el.style.display='block';setTimeout(()=>el.style.display='none',3500)}
+async function save(){if(!user||saving)return;saving=true;try{const {error}=await sb.from('player_state').upsert({id:user.id,state:state,updated_at:new Date().toISOString()},{onConflict:'id'});if(error)throw error}catch(e){gameMessage('저장 오류: '+e.message)}finally{saving=false}}
+async function loadGame(u,n){user=u;nickname=n;let {data,error}=await sb.from('player_state').select('state').eq('id',u.id).maybeSingle();if(error)throw error;state=normalize(data?.state);await save();$('auth').style.display='none';$('game').style.display='block';render()}
+function addRewards(xp,coins){state.xp+=xp;state.coins+=coins;while(state.xp>=state.level*100){state.xp-=state.level*100;state.level++;gameMessage('레벨 업! 모험가 Lv.'+state.level+' 달성!')}}
+function updatePet(){let p=state.pet;p.xp=Math.min(100,p.xp);if(p.xp>=100&&p.stage===0){p.stage=1;p.xp=0;gameMessage('알이 부화했어! 새 동료가 태어났어 🐣')}else if(p.xp>=100&&p.stage===1){p.stage=2;p.xp=0;gameMessage('동료가 한 단계 성장했어! 🌟')}}
+function render(){if(!state)return;$('playerName').textContent=nickname;$('levelText').textContent='Lv.'+state.level+' 모험가';$('coins').textContent=state.coins;$('xp').textContent=state.xp;$('count').textContent=state.discovered.length+'/8';
+let p=state.pet;$('petEmoji').textContent=p.stage===0?'🥚':p.stage===1?'🐣':'🦊';$('petName').textContent=p.name;$('petStage').textContent=p.stage===0?'알 단계 · 부화까지 경험치를 모아 봐!':p.stage===1?'유아 단계 · 무럭무럭 자라는 중!':'성체 단계 · 멋지게 성장했어!';$('petBar').style.width=p.xp+'%';$('petProgress').textContent=p.xp+' / 100 동료 경험치';
+let done=tasks.filter(t=>state.completed[t.id]).length;$('dailySummary').textContent='오늘 퀘스트 '+done+'/'+tasks.length+'개 완료 · 탐험 '+state.explores.count+'/5회';
+$('taskList').innerHTML=tasks.map(t=>`<div class="task"><div class="row"><b>${t.title}</b><span class="tiny">✨ ${t.xp} XP · 🪙 ${t.coins}</span></div><p class="muted">${t.desc}</p><button class="btn ${state.completed[t.id]?'':'primary'}" data-task="${t.id}" ${state.completed[t.id]?'disabled':''}>${state.completed[t.id]?'완료함 ✓':'완료 보상 받기'}</button></div>`).join('');
+$('regionList').innerHTML=regions.map(r=>`<div class="item"><div style="font-size:30px">${r.emoji}</div><b>${r.id}</b><p class="tiny">${r.desc}</p><button class="btn primary" data-region="${r.id}" ${state.explores.count>=5?'disabled':''}>탐험하기</button></div>`).join('');
+$('bookList').innerHTML=creatures.map(c=>{let found=state.discovered.includes(c.id);return `<div class="creature-card ${found?'':'hidden-creature'}"><div class="emoji">${found?c.emoji:'❔'}</div><b>${found?c.name:'미발견 생물'}</b><div class="tiny">${found?c.region+' 발견':'아직 발견하지 못했어'}</div></div>`}).join('');
+}
+function showView(v){document.querySelectorAll('.view').forEach(e=>e.classList.toggle('active',e.id===v));document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===v))}
+$('loginTab').onclick=()=>{mode='login';$('loginTab').classList.add('active');$('joinTab').classList.remove('active');$('authSubmit').textContent='로그인'};
+$('joinTab').onclick=()=>{mode='join';$('joinTab').classList.add('active');$('loginTab').classList.remove('active');$('authSubmit').textContent='회원가입'};
+async function internalEmail(n){let d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(n.trim().normalize('NFKC').toLowerCase()));let h=Array.from(new Uint8Array(d)).map(x=>x.toString(16).padStart(2,'0')).join('');return 'wv_'+h+'@login.wildverse.invalid'}
+$('authSubmit').onclick=async()=>{const n=$('nickname').value.trim(),p=$('password').value;if(n.length<2||n.length>16||/[\\s@]/.test(n)){ $('status').textContent='닉네임은 공백 없이 2~16자로 입력해 줘.';$('status').style.display='block';return}if(p.length<6){$('status').textContent='비밀번호는 6자 이상이어야 해.';$('status').style.display='block';return}
+$('authSubmit').disabled=true;try{const email=await internalEmail(n);let result=mode==='join'?await sb.auth.signUp({email,password:p,options:{data:{nickname:n}}}):await sb.auth.signInWithPassword({email,password:p});if(result.error)throw result.error;if(mode==='join'&&!result.data.session)throw Error('가입은 접수됐지만 세션이 없어. Supabase에서 Confirm email이 꺼져 있는지 확인해 줘.');await loadGame(result.data.user,n)}catch(e){$('status').textContent=e.message;$('status').style.display='block'}finally{$('authSubmit').disabled=false}};
+$('nav').onclick=e=>{let v=e.target.dataset.view;if(v)showView(v)};
+$('taskList').onclick=async e=>{let id=e.target.dataset.task;if(!id||state.completed[id])return;let t=tasks.find(x=>x.id===id);state.completed[id]=true;addRewards(t.xp,t.coins);state.pet.xp+=Math.ceil(t.xp/2);updatePet();render();await save();gameMessage('퀘스트 보상 획득! +'+t.xp+' XP, +'+t.coins+' 코인')};
+$('regionList').onclick=async e=>{let region=e.target.dataset.region;if(!region||state.explores.count>=5)return;state.explores.count++;let pool=creatures.filter(c=>c.region===region);let found=pool.length?pool[Math.floor(Math.random()*pool.length)]:creatures[Math.floor(Math.random()*creatures.length)];let isNew=!state.discovered.includes(found.id);if(isNew)state.discovered.push(found.id);let coins=15+Math.floor(Math.random()*16),xp=10+Math.floor(Math.random()*16);addRewards(xp,coins);state.pet.xp+=5;updatePet();render();await save();gameMessage((isNew?'새 생물 발견: '+found.name+' '+found.emoji:'탐험 완료! 이미 발견한 생물이야')+' · +'+coins+' 코인 · +'+xp+' XP')};
+$('train').onclick=async()=>{if(state.coins<10){gameMessage('코인이 부족해! 퀘스트나 탐험으로 모아 봐.');return}state.coins-=10;state.pet.xp+=15;updatePet();render();await save();gameMessage('훈련 완료! 동료 경험치 +15')};
+$('renamePet').onclick=async()=>{let n=prompt('동료의 새 이름을 입력해 줘',state.pet.name);if(!n||!n.trim())return;state.pet.name=n.trim().slice(0,14);render();await save()};
+$('buyFruit').onclick=async()=>{if(state.coins<30){gameMessage('코인이 부족해!');return}state.coins-=30;state.pet.xp+=20;updatePet();render();await save();gameMessage('성장 열매를 사용했어! 동료 경험치 +20')};
+$('logout').onclick=async()=>{await save();await sb.auth.signOut();user=null;state=null;$('game').style.display='none';$('auth').style.display='block';$('password').value=''};
+(async()=>{const {data}=await sb.auth.getSession();if(data.session){try{let n=data.session.user.user_metadata?.nickname||'모험가';await loadGame(data.session.user,n)}catch(e){gameMessage('게임 데이터를 불러오지 못했어: '+e.message)}}})();
+</script></body></html>
